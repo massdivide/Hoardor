@@ -25,6 +25,7 @@ namespace Hoardor
         private string HoardorMasterKey = "b65af5a104f97cfd07c1969aaaaeee8d"; // Change this to your own key Do it for client and server.
         private string HoardorSecretKey = "d8d50b33"; //This is the secret key for the client
         private string HoardorServerIP = "127.0.0.1"; // Change this to your server IP
+
         public MainGUI()
         {
             InitializeComponent();
@@ -34,6 +35,7 @@ namespace Hoardor
             uploadTargetFile.Enabled = false;
         }
 
+        // Event handler for when a file is dragged into the form
         private void MainGUI_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -42,25 +44,7 @@ namespace Hoardor
             }
         }
 
-        public void ToggleUploadButtonAccess(bool access)
-        {
-            uploadTargetFile.Enabled = access;
-        }
-
-        public void ToggleButton()
-        {
-            if (fileToUpload)
-            {
-                fileToUpload = false;
-                uploadTargetFile.Text = "Upload";
-            }
-            else
-            {
-                fileToUpload = true;
-                uploadTargetFile.Text = "Abort";
-            }
-        }
-
+        // Event handler for when a file is dropped into the form
         private void MainGUI_DragDrop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -87,16 +71,40 @@ namespace Hoardor
             }
         }
 
-        private void uploadTargetFile_Click(object sender, EventArgs e)
+        // Toggle the state of the upload button
+        public void ToggleUploadButtonAccess(bool access)
         {
-
+            uploadTargetFile.Enabled = access;
         }
 
+        // Toggle the state of the file upload flag and update the upload button text
+        public void ToggleButton()
+        {
+            if (fileToUpload)
+            {
+                fileToUpload = false;
+                uploadTargetFile.Text = "Upload";
+            }
+            else
+            {
+                fileToUpload = true;
+                uploadTargetFile.Text = "Abort";
+            }
+        }
+
+        // Event handler for the upload button click
+        private void uploadTargetFile_Click(object sender, EventArgs e)
+        {
+            // TODO: Implement upload functionality
+        }
+
+        // Update the file path to be uploaded
         public void UpdateFileToUploadPath(string path)
         {
             fileToUploadPath = path;
         }
 
+        // Compress the source file and upload it to the server
         public void CompressFile(string sourceFilePath, string compressedFilePath)
         {
             using (ZipArchive archive = ZipFile.Open(compressedFilePath, ZipArchiveMode.Create))
@@ -112,6 +120,7 @@ namespace Hoardor
             });
         }
 
+        // Upload the file to the server
         public void UploadFileToServer(string filePath)
         {
             if (isUploading)
@@ -123,7 +132,7 @@ namespace Hoardor
 
             // Read the file into packets
             byte[] fileBytes = File.ReadAllBytes(filePath);
-            
+
             int totalPackets = (int)Math.Ceiling((double)fileBytes.Length / packetSize);
 
             // Get the file name
@@ -182,20 +191,15 @@ namespace Hoardor
                 // Delete the zip file after upload is done
                 DeleteZipFile(filePath);
             }
-
             catch (Exception ex)
             {
                 //MessageBox.Show("The server is offline.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 SystemLog("[!]Error: The server is offline or Not Responding. (TIMED-OUT).");
                 isUploading = false;
             }
-
         }
 
-        private void HoardorLog_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
+        // Log a system message to the UI log
         public void SystemLog(string message)
         {
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -216,6 +220,7 @@ namespace Hoardor
             }
         }
 
+        // Log a system message to the UI log using Invoke
         public void SystemLogWithInvoke(string message)
         {
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -226,6 +231,8 @@ namespace Hoardor
                 HoardorLog.Items.Add(logEntry);
             }));
         }
+
+        // Check if a zip file with the same name already exists
         private bool CheckExistingZipFile(string filePath)
         {
             string zipFilePath = Path.ChangeExtension(filePath, ".zip");
@@ -244,6 +251,8 @@ namespace Hoardor
             }
             return false;
         }
+
+        // Delete the zip file
         public void DeleteZipFile(string filePath)
         {
             string zipFilePath = Path.ChangeExtension(filePath, ".zip");
@@ -252,8 +261,11 @@ namespace Hoardor
                 File.Delete(zipFilePath);
             }
         }
+
+        // Class for encryption and decryption operations
         public class OpSec
         {
+            // Encrypt a string using XOR operation with a master key
             public static string Encrypt(string input, string masterKey)
             {
                 string encrypted = string.Empty;
@@ -267,6 +279,7 @@ namespace Hoardor
                 return encrypted;
             }
 
+            // Decrypt a string using XOR operation with a master key
             public static string Decrypt(string input, string masterKey)
             {
                 string decrypted = string.Empty;
@@ -281,10 +294,10 @@ namespace Hoardor
             }
         }
 
+        // Event handler for the dnD button click
         private void dnD_Click(object sender, EventArgs e)
         {
-
+            // TODO: Implement dnD functionality
         }
-        // ...
     }
 }

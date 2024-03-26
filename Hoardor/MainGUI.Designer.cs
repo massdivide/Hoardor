@@ -1,4 +1,5 @@
-﻿namespace Hoardor
+﻿
+namespace Hoardor
 {
     partial class MainGUI
     {
@@ -78,6 +79,11 @@
             Name = "MainGUI";
             Text = "Hoardor";
             ResumeLayout(false);
+        }
+
+        private void HoardorLog_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

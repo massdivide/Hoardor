@@ -13,6 +13,7 @@ namespace Hoardor
         private const int Port = 4242;
         private static string HoardorMasterKey = "b65af5a104f97cfd07c1969aaaaeee8d"; // Change this to your own key Do it for client and server.
         private static string HoardorSecretKey = "d8d50b33"; //This is the secret key for the client
+
         public static void Main(string[] args)
         {
             TcpListener listener = new TcpListener(IPAddress.Any, Port);
@@ -46,7 +47,7 @@ namespace Hoardor
                 Console.WriteLine("Encrypted Security key: " + key);
                 string dekey = OpSec.Decrypt(key, HoardorMasterKey);
                 Console.WriteLine("Decrypted Security key: " + dekey);
-               
+
                 /* DO NOT DELETE THIS CODE
                 // Send the key to the server
                 byte[] serverKeyBytes = Encoding.UTF8.GetBytes(key);
@@ -147,6 +148,11 @@ namespace Hoardor
     {
         private const int Shift = 3;
 
+        /// <summary>
+        /// Encrypts the input string using a simple Caesar cipher algorithm.
+        /// </summary>
+        /// <param name="input">The string to encrypt.</param>
+        /// <returns>The encrypted string.</returns>
         public static string Encrypt(string input)
         {
             StringBuilder encrypted = new StringBuilder();
@@ -171,6 +177,11 @@ namespace Hoardor
             return encrypted.ToString();
         }
 
+        /// <summary>
+        /// Decrypts the input string that was encrypted using a simple Caesar cipher algorithm.
+        /// </summary>
+        /// <param name="input">The string to decrypt.</param>
+        /// <returns>The decrypted string.</returns>
         public static string Decrypt(string input)
         {
             StringBuilder decrypted = new StringBuilder();
@@ -197,6 +208,12 @@ namespace Hoardor
     }
     public class OpSec
     {
+        /// <summary>
+        /// Encrypts the input string using a bitwise XOR operation with a master key.
+        /// </summary>
+        /// <param name="input">The string to encrypt.</param>
+        /// <param name="masterKey">The master key used for encryption.</param>
+        /// <returns>The encrypted string.</returns>
         public static string Encrypt(string input, string masterKey)
         {
             string encrypted = string.Empty;
@@ -210,6 +227,12 @@ namespace Hoardor
             return encrypted;
         }
 
+        /// <summary>
+        /// Decrypts the input string that was encrypted using a bitwise XOR operation with a master key.
+        /// </summary>
+        /// <param name="input">The string to decrypt.</param>
+        /// <param name="masterKey">The master key used for encryption.</param>
+        /// <returns>The decrypted string.</returns>
         public static string Decrypt(string input, string masterKey)
         {
             string decrypted = string.Empty;
