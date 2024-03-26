@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static Hoardor.MainGUI;
 
 
 
@@ -20,7 +21,8 @@ namespace Hoardor
         private bool fileToUpload = false;
         private string fileToUploadPath = "";
         private bool isUploading = false;
-
+        private string HoardorMasterKey = "b65af5a104f97cfd07c1969aaaaeee8d"; // Change this to your own key Do it for client and server.
+        private string HoardorSecretKey = "d8d50b33"; //This is the secret key for the client
         public MainGUI()
         {
             InitializeComponent();
@@ -77,7 +79,7 @@ namespace Hoardor
                     {
                         string compressedFilePath = Path.ChangeExtension(fileToUploadPath, ".zip");
                         CompressFile(fileToUploadPath, compressedFilePath);
-                        SystemLog($"File {fileToUploadPath} compressed to {compressedFilePath}.");
+                        SystemLog($"SendingFile {fileToUploadPath} compressed to {compressedFilePath}.");
                     }
                 }
             }
@@ -126,48 +128,65 @@ namespace Hoardor
             string fileName = Path.GetFileName(filePath);
 
             // Connect to the server
-            using (TcpClient client = new TcpClient("127.0.0.1", 4242))
+            try
             {
-                using (NetworkStream stream = client.GetStream())
+                using (TcpClient client = new TcpClient("127.0.0.1", 4242))
                 {
-                    // Send the file name to the server
-                    byte[] fileNameBytes = Encoding.UTF8.GetBytes(fileName);
-                    byte[] fileNameLengthBytes = BitConverter.GetBytes(fileNameBytes.Length);
-                    stream.Write(fileNameLengthBytes, 0, fileNameLengthBytes.Length);
-                    stream.Write(fileNameBytes, 0, fileNameBytes.Length);
-
-                    // Send the total number of packets to the server
-                    byte[] totalPacketsBytes = BitConverter.GetBytes(totalPackets);
-                    stream.Write(totalPacketsBytes, 0, totalPacketsBytes.Length);
-
-                    // Send the file packets to the server
-                    for (int packetIndex = 0; packetIndex < totalPackets; packetIndex++)
+                    using (NetworkStream stream = client.GetStream())
                     {
-                        int offset = packetIndex * packetSize;
-                        int remainingBytes = fileBytes.Length - offset;
-                        int packetLength = Math.Min(packetSize, remainingBytes);
+                        // Send the key to the server
+                        string key = OpSec.Encrypt(HoardorSecretKey, HoardorMasterKey);
+                        byte[] keyBytes = Encoding.UTF8.GetBytes(key);
+                        byte[] keyLengthBytes = BitConverter.GetBytes(keyBytes.Length);
+                        stream.Write(keyLengthBytes, 0, keyLengthBytes.Length);
+                        stream.Write(keyBytes, 0, keyBytes.Length);
 
-                        // Create the packet
-                        byte[] packet = new byte[packetLength];
-                        Buffer.BlockCopy(fileBytes, offset, packet, 0, packetLength);
+                        // Send the file name to the server
+                        byte[] fileNameBytes = Encoding.UTF8.GetBytes(fileName);
+                        byte[] fileNameLengthBytes = BitConverter.GetBytes(fileNameBytes.Length);
+                        stream.Write(fileNameLengthBytes, 0, fileNameLengthBytes.Length);
+                        stream.Write(fileNameBytes, 0, fileNameBytes.Length);
 
-                        // Send the packet to the server
-                        stream.Write(packet, 0, packet.Length);
+                        // Send the total number of packets to the server
+                        byte[] totalPacketsBytes = BitConverter.GetBytes(totalPackets);
+                        stream.Write(totalPacketsBytes, 0, totalPacketsBytes.Length);
 
-                        // Update progress bar
-                        int progressPercentage = (int)(((double)packetIndex + 1) / totalPackets * 100);
-                        progressUpload.Invoke((MethodInvoker)(() => progressUpload.Value = progressPercentage));
+                        // Send the file packets to the server
+                        for (int packetIndex = 0; packetIndex < totalPackets; packetIndex++)
+                        {
+                            int offset = packetIndex * packetSize;
+                            int remainingBytes = fileBytes.Length - offset;
+                            int packetLength = Math.Min(packetSize, remainingBytes);
 
-                        // Log the packet send
-                        SystemLog($"Sent packet {packetIndex + 1} of {totalPackets} to the server.");
+                            // Create the packet
+                            byte[] packet = new byte[packetLength];
+                            Buffer.BlockCopy(fileBytes, offset, packet, 0, packetLength);
+
+                            // Send the packet to the server
+                            stream.Write(packet, 0, packet.Length);
+
+                            // Update progress bar
+                            int progressPercentage = (int)(((double)packetIndex + 1) / totalPackets * 100);
+                            progressUpload.Invoke((MethodInvoker)(() => progressUpload.Value = progressPercentage));
+
+                            // Log the packet send
+                            SystemLog($"Sent packet {packetIndex + 1} of {totalPackets} to the server.");
+                        }
                     }
                 }
-            }
-            SystemLog("Complete! "+fileName + " has been uploaded to the server.");
-            isUploading = false;
+                SystemLog("Complete! " + fileName + " has been uploaded to the server.");
+                isUploading = false;
 
-            // Delete the zip file after upload is done
-            DeleteZipFile(filePath);
+                // Delete the zip file after upload is done
+                DeleteZipFile(filePath);
+            }
+
+            catch (Exception ex)
+            {
+                MessageBox.Show("The server is offline.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                SystemLog("[!]Error: The server is offline or Not Responding. (TIMED-OUT).");
+            }
+           
         }
 
         private void HoardorLog_SelectedIndexChanged(object sender, EventArgs e)
@@ -228,7 +247,34 @@ namespace Hoardor
                 File.Delete(zipFilePath);
             }
         }
+        public class OpSec
+        {
+            public static string Encrypt(string input, string masterKey)
+            {
+                string encrypted = string.Empty;
 
+                for (int i = 0; i < input.Length; i++)
+                {
+                    char encryptedChar = (char)(input[i] ^ masterKey[i % masterKey.Length]);
+                    encrypted += encryptedChar;
+                }
+
+                return encrypted;
+            }
+
+            public static string Decrypt(string input, string masterKey)
+            {
+                string decrypted = string.Empty;
+
+                for (int i = 0; i < input.Length; i++)
+                {
+                    char decryptedChar = (char)(input[i] ^ masterKey[i % masterKey.Length]);
+                    decrypted += decryptedChar;
+                }
+
+                return decrypted;
+            }
+        }
         // ...
     }
 }
