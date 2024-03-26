@@ -8,7 +8,7 @@ namespace Hoardor
 {
     public class Server
     {
-        private const int PacketSize = 1024;
+        private const int PacketSize = 8192;
         private const int Port = 4242;
 
         public static void Main(string[] args)
@@ -22,12 +22,14 @@ namespace Hoardor
                 TcpClient client = listener.AcceptTcpClient();
                 Console.WriteLine("Client connected.");
 
-                HandleClient(client);
+                ThreadPool.QueueUserWorkItem(HandleClient, client);
             }
         }
 
-        private static void HandleClient(TcpClient client)
+        private static void HandleClient(object state)
         {
+            TcpClient client = (TcpClient)state;
+
             using (NetworkStream stream = client.GetStream())
             {
                 // Read the total number of packets from the client

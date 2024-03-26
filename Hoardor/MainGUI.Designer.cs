@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             uploadTargetFile = new Button();
+            progressUpload = new ProgressBar();
             SuspendLayout();
             // 
             // uploadTargetFile
@@ -41,11 +42,19 @@
             uploadTargetFile.UseVisualStyleBackColor = true;
             uploadTargetFile.Click += uploadTargetFile_Click;
             // 
+            // progressUpload
+            // 
+            progressUpload.Location = new Point(12, 489);
+            progressUpload.Name = "progressUpload";
+            progressUpload.Size = new Size(766, 23);
+            progressUpload.TabIndex = 1;
+            // 
             // MainGUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(997, 524);
+            Controls.Add(progressUpload);
             Controls.Add(uploadTargetFile);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -57,5 +66,6 @@
         #endregion
 
         private Button uploadTargetFile;
+        private ProgressBar progressUpload;
     }
 }

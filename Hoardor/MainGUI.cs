@@ -17,8 +17,10 @@ namespace Hoardor
 {
     public partial class MainGUI : Form
     {
-        public bool fileToUpload = false;
-        public string fileToUploadPath = "";
+        private bool fileToUpload = false;
+        private string fileToUploadPath = "";
+        private bool isUploading = false;
+
         public MainGUI()
         {
             InitializeComponent();
@@ -59,6 +61,10 @@ namespace Hoardor
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
+                if (isUploading)
+                {
+                    return; // Already uploading, ignore the request
+                }
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
                 ToggleButton();
@@ -73,27 +79,12 @@ namespace Hoardor
                     fileToUploadPath = tempDirectory;
                 }
                 CompressFile(fileToUploadPath);
-
             }
         }
 
         private void uploadTargetFile_Click(object sender, EventArgs e)
         {
-            if(fileToUpload)
-            {
-                // Abort the upload
-                ToggleButton();
-                ToggleUploadButtonAccess(false);
-                // Your code here
-            }
-            else
-            {
-                // Upload the file
-                ToggleButton();
-                ToggleUploadButtonAccess(false);
-                
-                // Your code here
-            }
+
         }
 
         public void UpdateFileToUploadPath(string path)
@@ -104,14 +95,28 @@ namespace Hoardor
         public void CompressFile(string path)
         {
             string compressedFilePath = Path.ChangeExtension(path, ".zip");
-            ZipFile.CreateFromDirectory(path, compressedFilePath);
-            UploadFileToServer(compressedFilePath);
+
+            // Use ThreadPool to run the compression and upload tasks
+            ThreadPool.SetMaxThreads(48, 48); // Set the maximum number of threads in the ThreadPool
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                ZipFile.CreateFromDirectory(path, compressedFilePath);
+                UploadFileToServer(compressedFilePath);
+            });
         }
+
         public void UploadFileToServer(string filePath)
         {
+            if (isUploading)
+            {
+                return; // Already uploading, ignore the request
+            }
+
+            isUploading = true;
+
             // Read the file into packets
             byte[] fileBytes = File.ReadAllBytes(filePath);
-            int packetSize = 1024; // Set the packet size as desired
+            int packetSize = 8192; // Set the packet size as desired
             int totalPackets = (int)Math.Ceiling((double)fileBytes.Length / packetSize);
 
             // Connect to the server
@@ -136,13 +141,16 @@ namespace Hoardor
 
                         // Send the packet to the server
                         stream.Write(packet, 0, packet.Length);
+
+                        // Update progress bar
+                        int progressPercentage = (int)(((double)packetIndex + 1) / totalPackets * 100);
+                        progressUpload.Invoke((MethodInvoker)(() => progressUpload.Value = progressPercentage));
                     }
                 }
             }
+
+            isUploading = false;
         }
-                
-
-
 
         // ...
     }
