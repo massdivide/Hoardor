@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace Hoardor
 {
@@ -32,7 +33,25 @@ namespace Hoardor
 
             using (NetworkStream stream = client.GetStream())
             {
-                // Read the total number of packets from the client
+                // Read the file name length from the client
+                byte[] fileNameLengthBytes = new byte[sizeof(int)];
+                stream.Read(fileNameLengthBytes, 0, fileNameLengthBytes.Length);
+                int fileNameLength = BitConverter.ToInt32(fileNameLengthBytes, 0);
+
+                // Read the file name from the client
+                byte[] fileNameBytes = new byte[fileNameLength];
+                stream.Read(fileNameBytes, 0, fileNameBytes.Length);
+                string fileName = Encoding.UTF8.GetString(fileNameBytes);
+                string uniqueFileName = GetUniqueFileName(fileName);
+
+                if (fileName != uniqueFileName)
+                {
+                    Console.WriteLine($"File name already exists. Renaming to {uniqueFileName}");
+                    fileName = uniqueFileName;
+                }
+                Console.WriteLine($"File name: {fileName}");
+
+                // Receive the total number of packets from the client
                 byte[] totalPacketsBytes = new byte[sizeof(int)];
                 stream.Read(totalPacketsBytes, 0, totalPacketsBytes.Length);
                 int totalPackets = BitConverter.ToInt32(totalPacketsBytes, 0);
@@ -54,10 +73,11 @@ namespace Hoardor
 
                 Console.WriteLine("File received successfully.");
 
-                // Save the file with a random name and .zip extension
+                // Save the file with the original file name and .zip extension
                 string serverDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-                string randomFileName = Path.GetRandomFileName();
-                string zipFilePath = Path.Combine(serverDirectory, $"{randomFileName}.zip");
+                string hoardingsDirectory = Path.Combine(serverDirectory, "Hoardings");
+                Directory.CreateDirectory(hoardingsDirectory);
+                string zipFilePath = Path.Combine(hoardingsDirectory, $"{fileName}");
 
                 // Write the file data to the zip file
                 File.WriteAllBytes(zipFilePath, fileData);
@@ -75,6 +95,25 @@ namespace Hoardor
             }
 
             client.Close();
+        }
+
+        private static string GetUniqueFileName(string fileName)
+        {
+            string uniqueFileName = fileName;
+            int counter = 1;
+
+            string serverDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            string hoardingsDirectory = Path.Combine(serverDirectory, "Hoardings");
+
+            while (File.Exists(Path.Combine(hoardingsDirectory, uniqueFileName)))
+            {
+                string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+                string fileExtension = Path.GetExtension(fileName);
+                uniqueFileName = $"{fileNameWithoutExtension}_{counter}{fileExtension}";
+                counter++;
+            }
+
+            return uniqueFileName;
         }
     }
 }

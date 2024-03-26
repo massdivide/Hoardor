@@ -30,6 +30,7 @@
         {
             uploadTargetFile = new Button();
             progressUpload = new ProgressBar();
+            HoardorLog = new ListBox();
             SuspendLayout();
             // 
             // uploadTargetFile
@@ -49,11 +50,22 @@
             progressUpload.Size = new Size(766, 23);
             progressUpload.TabIndex = 1;
             // 
+            // HoardorLog
+            // 
+            HoardorLog.FormattingEnabled = true;
+            HoardorLog.ItemHeight = 15;
+            HoardorLog.Location = new Point(1, 402);
+            HoardorLog.Name = "HoardorLog";
+            HoardorLog.Size = new Size(767, 79);
+            HoardorLog.TabIndex = 2;
+            HoardorLog.SelectedIndexChanged += HoardorLog_SelectedIndexChanged;
+            // 
             // MainGUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(997, 524);
+            Controls.Add(HoardorLog);
             Controls.Add(progressUpload);
             Controls.Add(uploadTargetFile);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -67,5 +79,6 @@
 
         private Button uploadTargetFile;
         private ProgressBar progressUpload;
+        private ListBox HoardorLog;
     }
 }

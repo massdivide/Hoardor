@@ -73,12 +73,13 @@ namespace Hoardor
 
                 if (File.Exists(fileToUploadPath))
                 {
-                    string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                    Directory.CreateDirectory(tempDirectory);
-                    File.Copy(fileToUploadPath, Path.Combine(tempDirectory, Path.GetFileName(fileToUploadPath)));
-                    fileToUploadPath = tempDirectory;
+                    if (!CheckExistingZipFile(fileToUploadPath))
+                    {
+                        string compressedFilePath = Path.ChangeExtension(fileToUploadPath, ".zip");
+                        CompressFile(fileToUploadPath, compressedFilePath);
+                        SystemLog($"File {fileToUploadPath} compressed to {compressedFilePath}.");
+                    }
                 }
-                CompressFile(fileToUploadPath);
             }
         }
 
@@ -92,15 +93,17 @@ namespace Hoardor
             fileToUploadPath = path;
         }
 
-        public void CompressFile(string path)
+        public void CompressFile(string sourceFilePath, string compressedFilePath)
         {
-            string compressedFilePath = Path.ChangeExtension(path, ".zip");
+            using (ZipArchive archive = ZipFile.Open(compressedFilePath, ZipArchiveMode.Create))
+            {
+                archive.CreateEntryFromFile(sourceFilePath, Path.GetFileName(sourceFilePath));
+            }
 
             // Use ThreadPool to run the compression and upload tasks
             ThreadPool.SetMaxThreads(48, 48); // Set the maximum number of threads in the ThreadPool
             ThreadPool.QueueUserWorkItem(state =>
             {
-                ZipFile.CreateFromDirectory(path, compressedFilePath);
                 UploadFileToServer(compressedFilePath);
             });
         }
@@ -119,11 +122,20 @@ namespace Hoardor
             int packetSize = 8192; // Set the packet size as desired
             int totalPackets = (int)Math.Ceiling((double)fileBytes.Length / packetSize);
 
+            // Get the file name
+            string fileName = Path.GetFileName(filePath);
+
             // Connect to the server
             using (TcpClient client = new TcpClient("127.0.0.1", 4242))
             {
                 using (NetworkStream stream = client.GetStream())
                 {
+                    // Send the file name to the server
+                    byte[] fileNameBytes = Encoding.UTF8.GetBytes(fileName);
+                    byte[] fileNameLengthBytes = BitConverter.GetBytes(fileNameBytes.Length);
+                    stream.Write(fileNameLengthBytes, 0, fileNameLengthBytes.Length);
+                    stream.Write(fileNameBytes, 0, fileNameBytes.Length);
+
                     // Send the total number of packets to the server
                     byte[] totalPacketsBytes = BitConverter.GetBytes(totalPackets);
                     stream.Write(totalPacketsBytes, 0, totalPacketsBytes.Length);
@@ -145,11 +157,76 @@ namespace Hoardor
                         // Update progress bar
                         int progressPercentage = (int)(((double)packetIndex + 1) / totalPackets * 100);
                         progressUpload.Invoke((MethodInvoker)(() => progressUpload.Value = progressPercentage));
+
+                        // Log the packet send
+                        SystemLog($"Sent packet {packetIndex + 1} of {totalPackets} to the server.");
                     }
                 }
             }
-
+            SystemLog("Complete! "+fileName + " has been uploaded to the server.");
             isUploading = false;
+
+            // Delete the zip file after upload is done
+            DeleteZipFile(filePath);
+        }
+
+        private void HoardorLog_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+        public void SystemLog(string message)
+        {
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string logEntry = $"{timestamp} - {message}";
+
+            if (HoardorLog.InvokeRequired)
+            {
+                HoardorLog.Invoke(new MethodInvoker(delegate
+                {
+                    HoardorLog.Items.Add(logEntry);
+                }));
+            }
+            else
+            {
+                HoardorLog.Items.Add(logEntry);
+            }
+        }
+
+        public void SystemLogWithInvoke(string message)
+        {
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string logEntry = $"{timestamp} - {message}";
+
+            HoardorLog.Invoke((MethodInvoker)(() =>
+            {
+                HoardorLog.Items.Add(logEntry);
+            }));
+        }
+        private bool CheckExistingZipFile(string filePath)
+        {
+            string zipFilePath = Path.ChangeExtension(filePath, ".zip");
+            if (File.Exists(zipFilePath))
+            {
+                DialogResult result = MessageBox.Show("A zip file with the same name already exists. Do you want to delete it?", "File Exists", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    File.Delete(zipFilePath);
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public void DeleteZipFile(string filePath)
+        {
+            string zipFilePath = Path.ChangeExtension(filePath, ".zip");
+            if (File.Exists(zipFilePath))
+            {
+                File.Delete(zipFilePath);
+            }
         }
 
         // ...
