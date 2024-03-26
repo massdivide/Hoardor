@@ -21,8 +21,10 @@ namespace Hoardor
         private bool fileToUpload = false;
         private string fileToUploadPath = "";
         private bool isUploading = false;
+        private int packetSize = 256000;
         private string HoardorMasterKey = "b65af5a104f97cfd07c1969aaaaeee8d"; // Change this to your own key Do it for client and server.
         private string HoardorSecretKey = "d8d50b33"; //This is the secret key for the client
+        private string HoardorServerIP = "127.0.0.1"; // Change this to your server IP
         public MainGUI()
         {
             InitializeComponent();
@@ -121,7 +123,7 @@ namespace Hoardor
 
             // Read the file into packets
             byte[] fileBytes = File.ReadAllBytes(filePath);
-            int packetSize = 8192; // Set the packet size as desired
+            
             int totalPackets = (int)Math.Ceiling((double)fileBytes.Length / packetSize);
 
             // Get the file name
@@ -130,7 +132,7 @@ namespace Hoardor
             // Connect to the server
             try
             {
-                using (TcpClient client = new TcpClient("127.0.0.1", 4242))
+                using (TcpClient client = new TcpClient(HoardorServerIP, 4242))
                 {
                     using (NetworkStream stream = client.GetStream())
                     {
@@ -183,10 +185,11 @@ namespace Hoardor
 
             catch (Exception ex)
             {
-                MessageBox.Show("The server is offline.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //MessageBox.Show("The server is offline.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 SystemLog("[!]Error: The server is offline or Not Responding. (TIMED-OUT).");
+                isUploading = false;
             }
-           
+
         }
 
         private void HoardorLog_SelectedIndexChanged(object sender, EventArgs e)
@@ -203,11 +206,13 @@ namespace Hoardor
                 HoardorLog.Invoke(new MethodInvoker(delegate
                 {
                     HoardorLog.Items.Add(logEntry);
+                    HoardorLog.TopIndex = HoardorLog.Items.Count - 1; // Scroll to the last item
                 }));
             }
             else
             {
                 HoardorLog.Items.Add(logEntry);
+                HoardorLog.TopIndex = HoardorLog.Items.Count - 1; // Scroll to the last item
             }
         }
 
@@ -274,6 +279,11 @@ namespace Hoardor
 
                 return decrypted;
             }
+        }
+
+        private void dnD_Click(object sender, EventArgs e)
+        {
+
         }
         // ...
     }

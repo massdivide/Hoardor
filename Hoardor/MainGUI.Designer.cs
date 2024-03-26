@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainGUI));
             uploadTargetFile = new Button();
             progressUpload = new ProgressBar();
             HoardorLog = new ListBox();
@@ -45,18 +46,18 @@
             // 
             // progressUpload
             // 
-            progressUpload.Location = new Point(12, 489);
+            progressUpload.Location = new Point(12, 431);
             progressUpload.Name = "progressUpload";
-            progressUpload.Size = new Size(766, 23);
+            progressUpload.Size = new Size(973, 23);
             progressUpload.TabIndex = 1;
             // 
             // HoardorLog
             // 
             HoardorLog.FormattingEnabled = true;
             HoardorLog.ItemHeight = 15;
-            HoardorLog.Location = new Point(1, 402);
+            HoardorLog.Location = new Point(12, 460);
             HoardorLog.Name = "HoardorLog";
-            HoardorLog.Size = new Size(767, 79);
+            HoardorLog.Size = new Size(767, 49);
             HoardorLog.TabIndex = 2;
             HoardorLog.SelectedIndexChanged += HoardorLog_SelectedIndexChanged;
             // 
@@ -64,10 +65,14 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = SystemColors.ActiveBorder;
+            BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
+            BackgroundImageLayout = ImageLayout.Center;
             ClientSize = new Size(997, 524);
             Controls.Add(HoardorLog);
             Controls.Add(progressUpload);
             Controls.Add(uploadTargetFile);
+            DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             Name = "MainGUI";

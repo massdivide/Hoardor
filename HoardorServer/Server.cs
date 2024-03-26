@@ -9,7 +9,7 @@ namespace Hoardor
 {
     public class Server
     {
-        private const int PacketSize = 8192;
+        private const int PacketSize = 256000;
         private const int Port = 4242;
         private static string HoardorMasterKey = "b65af5a104f97cfd07c1969aaaaeee8d"; // Change this to your own key Do it for client and server.
         private static string HoardorSecretKey = "d8d50b33"; //This is the secret key for the client
