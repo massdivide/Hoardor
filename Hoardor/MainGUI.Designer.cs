@@ -33,6 +33,7 @@ namespace Hoardor
             uploadTargetFile = new Button();
             progressUpload = new ProgressBar();
             HoardorLog = new ListBox();
+            commandBox = new TextBox();
             SuspendLayout();
             // 
             // uploadTargetFile
@@ -62,6 +63,14 @@ namespace Hoardor
             HoardorLog.TabIndex = 2;
             HoardorLog.SelectedIndexChanged += HoardorLog_SelectedIndexChanged;
             // 
+            // commandBox
+            // 
+            commandBox.Location = new Point(693, 402);
+            commandBox.Name = "commandBox";
+            commandBox.Size = new Size(292, 23);
+            commandBox.TabIndex = 3;
+            commandBox.KeyDown += commandBox_KeyDown;
+            // 
             // MainGUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -70,6 +79,7 @@ namespace Hoardor
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Center;
             ClientSize = new Size(997, 524);
+            Controls.Add(commandBox);
             Controls.Add(HoardorLog);
             Controls.Add(progressUpload);
             Controls.Add(uploadTargetFile);
@@ -79,6 +89,7 @@ namespace Hoardor
             Name = "MainGUI";
             Text = "Hoardor";
             ResumeLayout(false);
+            PerformLayout();
         }
 
         private void HoardorLog_SelectedIndexChanged(object sender, EventArgs e)
@@ -91,5 +102,6 @@ namespace Hoardor
         private Button uploadTargetFile;
         private ProgressBar progressUpload;
         private ListBox HoardorLog;
+        private TextBox commandBox;
     }
 }

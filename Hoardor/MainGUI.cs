@@ -25,7 +25,7 @@ namespace Hoardor
         private string HoardorMasterKey = "b65af5a104f97cfd07c1969aaaaeee8d"; // Change this to your own key Do it for client and server.
         private string HoardorSecretKey = "d8d50b33"; //This is the secret key for the client
         private string HoardorServerIP = "127.0.0.1"; // Change this to your server IP
-
+        private bool isCompessing = false;
         public MainGUI()
         {
             InitializeComponent();
@@ -107,17 +107,21 @@ namespace Hoardor
         // Compress the source file and upload it to the server
         public void CompressFile(string sourceFilePath, string compressedFilePath)
         {
-            using (ZipArchive archive = ZipFile.Open(compressedFilePath, ZipArchiveMode.Create))
-            {
-                archive.CreateEntryFromFile(sourceFilePath, Path.GetFileName(sourceFilePath));
-            }
-
             // Use ThreadPool to run the compression and upload tasks
             ThreadPool.SetMaxThreads(48, 48); // Set the maximum number of threads in the ThreadPool
             ThreadPool.QueueUserWorkItem(state =>
             {
+                SystemLog($"Compressing...");
+                using (ZipArchive archive = ZipFile.Open(compressedFilePath, ZipArchiveMode.Create))
+                {
+                    isCompessing = true;
+                    archive.CreateEntryFromFile(sourceFilePath, Path.GetFileName(sourceFilePath));
+
+                }
                 UploadFileToServer(compressedFilePath);
             });
+
+            
         }
 
         // Upload the file to the server
@@ -128,6 +132,7 @@ namespace Hoardor
                 return; // Already uploading, ignore the request
             }
 
+            isCompessing= false;
             isUploading = true;
 
             // Read the file into packets
@@ -299,5 +304,68 @@ namespace Hoardor
         {
             // TODO: Implement dnD functionality
         }
+        // Event handler for when the enter key is pressed in the commandBox
+        private void commandBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                string message = commandBox.Text;
+                ProcessCommand(message);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+        private bool ProcessCommand(string command)
+        {
+
+            if (command.Substring(0, 6) == "!setip")
+            {
+                if(command.Length == 6)
+                {
+                    SystemLog("[Help] !setip - Change the default IP");
+                    return false;
+                }
+                command = command.Substring(7);
+                if (!IsValidIPv4Address(command))
+                {
+                    SystemLog("Invalid IP address format.");
+                    return false;
+                }
+                HoardorServerIP = command;
+                SystemLog("Server IP set to: '" + HoardorServerIP +"'");
+                Invoke((MethodInvoker)(() =>
+                {
+                    commandBox.Text = "";
+                }));
+                return true;
+
+            }
+
+            
+            commandBox.Invoke((MethodInvoker)(() =>
+            {
+                commandBox.Text = "";
+            }));
+            return false;
+        }
+        public bool IsValidIPv4Address(string ipAddress)
+        {
+            string[] octets = ipAddress.Split('.');
+            if (octets.Length != 4)
+            {
+                return false;
+            }
+
+            foreach (string octet in octets)
+            {
+                if (!byte.TryParse(octet, out byte result))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
     }
 }
